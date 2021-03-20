@@ -1,0 +1,119 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class AITalkToEachOther : MonoBehaviour
+{
+    public UnityEngine.AI.NavMeshAgent agent;
+
+    public bool patrolling = false;
+    public bool isAtObject = false;
+    public bool talkingEnabled = false;
+    public Transform[] waypoints;
+    private int curWaypoint = 0;
+    private int maxWaypoint;
+    public float minWaypointDistance = 0.1f;
+    public float mWaitTime = 5;
+    public float curTimeDist = 0;
+    public float startingTimeDist = 10;
+    public Transform toTalkPartner;
+    public GameObject dialText;
+    public Collider m_Collider;
+
+    void Awake()
+    {
+        agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+        maxWaypoint = waypoints.Length - 1;
+        dialText.SetActive(false);
+    }
+
+    void Start()
+    {
+        patrolling = true;
+        m_Collider.enabled = true;
+        m_Collider = GetComponent<Collider>();
+    }
+
+    void Update()
+    {
+        if (patrolling)
+        {
+            Patrol();
+        }
+
+        if(talkingEnabled)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(toTalkPartner.transform.position - transform.position);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 1 * Time.deltaTime);
+        }
+
+        if (isAtObject)
+        {
+            agent.isStopped = true;
+            patrolling = false;
+            curTimeDist -= Time.deltaTime;
+            if (curTimeDist < 0)
+            {
+                curTimeDist = 5;
+                isAtObject = false;
+                agent.isStopped = false;
+                patrolling = true;
+            }
+        }
+    }
+
+    private void Patrol()
+    {
+        Vector3 tempLocalPosition;
+        Vector3 tempWaypointPosition;
+        tempLocalPosition = transform.position;
+        tempLocalPosition.y = 0f;
+        tempWaypointPosition = waypoints[curWaypoint].position;
+        tempWaypointPosition.y = 0f;
+
+        if (Vector3.Distance(tempLocalPosition, tempWaypointPosition) <= minWaypointDistance)
+        {
+            mWaitTime -= Time.deltaTime;
+            if (mWaitTime < 0)
+            {
+                mWaitTime = 5;
+                if (curWaypoint == maxWaypoint)
+                    curWaypoint = 0;
+                else
+                    curWaypoint++;
+            }
+        }
+        agent.SetDestination(waypoints[curWaypoint].position);
+    }
+
+    void OnTriggerEnter(Collider col)
+    {
+        if (col.tag == "TalkToTest1")
+        {
+            patrolling = false;
+            agent.isStopped = true;
+            StartCoroutine(Talking());
+        }
+
+        else if (col.tag == "TalktToTest2")
+        {
+            patrolling = false;
+            agent.isStopped = true;
+            StartCoroutine(Talking());
+        }
+    }
+
+    private IEnumerator Talking()
+    {
+        talkingEnabled = true;
+        dialText.SetActive(true);
+        yield return new WaitForSeconds(5);
+        dialText.SetActive(false);
+        patrolling = true;
+        agent.isStopped = false;
+        talkingEnabled = false;
+        m_Collider.enabled = false;
+        yield return new WaitForSeconds(5);
+        //m_Collider.enabled = true;
+    }
+}
