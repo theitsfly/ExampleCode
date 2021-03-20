@@ -148,10 +148,8 @@ public class SheriffAI : MonoBehaviour
             {
                 mWaitTime = 5;
                 if (curWaypoint == maxWaypoint)
-                    // If so, go back to the first waypoint and start over again
                     curWaypoint = 0;
                 else
-                    // If we haven't reached the Last waypoint, just move on to the next one
                     curWaypoint++;
             }
         }
